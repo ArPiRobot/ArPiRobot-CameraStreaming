@@ -18,15 +18,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with ArPiRobot-ImageScripts.  If not, see <https://www.gnu.org/licenses/>.
 ####################################################################################################
-# script:      start_h264_libx264.sh
-# description: Starts an H.264 stream using the libx264 software encoder
-#              Configured to minimize latency, however will not be as good as a hardware accelerated
-#              method. Also requires considerable CPU time and may have issues with higher 
-#              framerates.
+# script:      start_mjpeg_jpegenc.sh
+# description: Starts an MJPEG stream using raw frames from the camera. Frames are encoded to JPEG
+#              images on the Pi allowing for control of the quality.
 # author:      Marcus Behel
 # date:        1-2-2022
 # version:     v1.0.0
 ####################################################################################################
+
+# 1-100: 100 = best quality, 1 = smallest size
+QUALITY=60
 
 DIR=$(realpath $(dirname $0))
 
@@ -34,6 +35,6 @@ source "$DIR"/config.sh
 
 gst-launch-1.0 v4l2src device=${VIDEO_DEVICE} io-mode=$V4L2_IOMODE ! \
     video/x-raw,width=${VIDEO_WIDTH},height=${VIDEO_HEIGHT},framerate=${VIDEO_FRAMERATE}/1 ! \
-    x264enc tune=zerolatency speed-preset=ultrafast ! mpegtsmux ! $SINK
+    jpegenc quality=$QUALITY ! multipartmux ! $SINK
 
 exit $?

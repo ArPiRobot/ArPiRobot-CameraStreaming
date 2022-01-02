@@ -30,6 +30,11 @@ VIDEO_WIDTH=640
 VIDEO_HEIGHT=480
 VIDEO_FRAMERATE=60
 
+# Generally, use auto. If latency issues with USB camera, try dmabuf
+V4L2_IOMODE=auto
+
+# TODO: Support brightness, contrast, flips, etc
+
 NET_MODE=tcp
 IP_ADDRESS=0.0.0.0
 PORT=5008

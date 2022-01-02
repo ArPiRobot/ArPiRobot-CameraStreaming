@@ -30,7 +30,7 @@ DIR=$(realpath $(dirname $0))
 
 source "$DIR"/config.sh
 
-gst-launch-1.0 v4l2src device=${VIDEO_DEVICE} ! \
+gst-launch-1.0 v4l2src device=${VIDEO_DEVICE} io-mode=$V4L2_IOMODE ! \
     video/x-h264,width=${VIDEO_WIDTH},height=${VIDEO_HEIGHT},framerate=${VIDEO_FRAMERATE}/1 ! \
     h264parse config-interval=-1 ! mpegtsmux ! $SINK
 
