@@ -31,6 +31,8 @@ sudo apt install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugin
 ffplay -fflags nobuffer -flags low_delay -framedrop -sync ext tcp://remote_host:5008
 
 ffplay -fflags nobuffer -flags low_delay -framedrop -sync ext udp://localhost:5008
+
+# Add -probesize 32 to reduce startup time
 ```
 
 TODO: mpv, mplayer, and vlc

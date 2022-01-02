@@ -44,9 +44,20 @@ VIDEO_DEVICE=/dev/video0
 VIDEO_WIDTH=640
 VIDEO_HEIGHT=480
 VIDEO_FRAMERATE=60
+
 V4L2_IOMODE=auto
 
-# TODO: Support brightness, contrast, flips, etc
+# All cameras should support these
+BRIGHTNESS=50                   # 0 to 100
+CONTRAST=0                      # -100 to 100
+SATURATION=0                    # -100 to 100
+VFLIP=1                         # 0 = false, 1 = true
+HFLIP=0                         # 0 = false, 1 = true
+ROTATION=0                      # 0, 90, 180, 270, 360
+
+# Pi Camera specific
+EXPOSURE_TIME=5000              # 1-10000
+ISO_SENSITIVITY=0               # 0-4
 
 ################################################################################
 # Network Settings
@@ -84,3 +95,17 @@ else
     echo "Invalid net mode!"
     exit 1
 fi
+
+
+# Apply general camera settings using v4l2-ctl
+{
+    v4l2-ctl -d $VIDEO_DEVICE -c brightness=$BRIGHTNESS
+    v4l2-ctl -d $VIDEO_DEVICE -c contrast=$CONTRAST
+    v4l2-ctl -d $VIDEO_DEVICE -c saturation=$SATURATION
+    v4l2-ctl -d $VIDEO_DEVICE -c vertical_flip=$VFLIP
+    v4l2-ctl -d $VIDEO_DEVICE -c horizontal_flip=$HFLIP
+    v4l2-ctl -d $VIDEO_DEVICE -c rotate=$ROTATION
+
+    v4l2-ctl -d $VIDEO_DEVICE -c exposure_time_absolute=$EXPOSURE_TIME
+    v4l2-ctl -d $VIDEO_DEVICE -c iso_sensitivity=$ISO_SENSITIVITY
+} > /dev/null 2>&1
