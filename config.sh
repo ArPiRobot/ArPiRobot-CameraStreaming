@@ -25,19 +25,53 @@
 # version:     v1.0.0
 ####################################################################################################
 
+
+################################################################################
+# Video Device Settings
+# ------------------------------------------------------------------------------
+# VIDEO_DEVICE    = Device to capture video from
+#                
+# VIDEO_WIDTH     = Width of frames (must be supported in the given input mode)
+#                   v4l2-ctl -d /dev/video# --list-formats
+# VIDEO_HEIGHT    = Height of frames (must be supported in the given input mode)
+#                   v4l2-ctl -d /dev/video# --list-formats
+# VIDEO_FRAMERATE = Capture framerate (must be supported in given input mode)
+#                   v4l2-ctl -d /dev/video# --list-formats
+# V4L2_IOMODE     = Usually, auto. If latency issues with USB camera try dmabuf
+################################################################################
+
 VIDEO_DEVICE=/dev/video0
 VIDEO_WIDTH=640
 VIDEO_HEIGHT=480
 VIDEO_FRAMERATE=60
-
-# Generally, use auto. If latency issues with USB camera, try dmabuf
 V4L2_IOMODE=auto
 
 # TODO: Support brightness, contrast, flips, etc
 
+################################################################################
+# Network Settings
+# ------------------------------------------------------------------------------
+# TCP Mode (NET_MODE=tcp)
+#     IP_ADDRESS = Which of this device's IP addresses the server should 
+#                  be accessible on. 0.0.0.0 for all IP addresses.
+#     PORT       = TCP port to use for the server
+# 
+# UDP Unicast Mode (NET_MODE=udp)
+#     IP_ADDRESS = Address of the device to send UDP packets to.
+#     PORT       = Port to send UDP packets to
+# 
+# UDP Multicast Mode (NET_MODE=udp-multicast)
+#     IP_ADDRESS = Multicast IP address for the current network
+#     PORT       = Port to send packets to
+################################################################################
+
 NET_MODE=tcp
 IP_ADDRESS=0.0.0.0
 PORT=5008
+
+
+
+
 
 
 if [ "$NET_MODE" == "tcp" ]; then
