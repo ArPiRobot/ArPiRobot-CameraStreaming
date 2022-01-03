@@ -14,16 +14,7 @@ sudo apt install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugin
 
 
 ## Scripts
-
-*H.264 will be lower bandwidth streams (higher resolutions and FPS supported), but can be higher latency or require more CPU time to encoder the data (depends on the system). MJPEG is often lower latency and easier to encoder, but will require more bandwidth for the same resolution and framerate compared to H.264 encoded streams.*
-
-- `start_h264_native.sh`: Starts an H.264 stream using H.264 frames directly from a camera that natively supports H.264 output. The Pi Camera supports H.264 natively, but many cameras do not.
-- `start_h264_omx.sh`: Starts an H.264 stream using the hardware accelerated OpenMax encoder available on the Raspberry Pi. This will often be similar in performance to the "native" H.264 method.
-- `start_h264_libx264.sh`: Starts an H.264 stream using software encoding (libx264 library). This script configures libx264 in such a way to minimize latency, however it will likely still be higher than a hardware accelerated method. This encoding method will also require a considerable amount of CPU time on lower power devices. Higher framerates and resolutions will require more CPU time and add more latency to the stream using this method.
-
-- `start_mjpeg_native.sh`: Uses JPEG frames from the camera to create an MJPEG stream. The camera must support JPEG frames natively. It is often better to encode on the Pi, however, as it gives more control over quality / size and thus bandwidth.
-- `start_mjpeg_jpegenc.sh`: Uses software JPEG encoder on the Pi to encode JPEG images to create an MJPEG stream. Gives control of image quality and often allows better latency and framerates on the streamed video.
-
+TODO
 
 ## Playing Stream
 
