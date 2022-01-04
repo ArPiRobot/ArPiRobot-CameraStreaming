@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--quality", metavar="QUALITY", type=int, choices=range(1, 100), default=50, help="JPEG image quality (1-100) for MPEG stream (does not apply to H.264, does not work with raspicam driver). Default = 50")
     parser.add_argument("--vflip", action='store_true', help="Vertically flip the camera image.")
     parser.add_argument("--hflip", action='store_true', help="Vertically flip the camera image.")
-    parser.add_argument("--rotate", metavar="ROTATION", type=int, choices=[0, 90, 180, 270], default=0, help="Rotate camera image (0, 90, 180, 270). Default = 0")
+    parser.add_argument("--rotate", metavar="ROTATION", type=int, choices=[0, 90, 180, 270], default=0, help="Rotate camera image (0, 90, 180, 270). If using libcamera, only 0 and 180 are supported. Default = 0")
     parser.add_argument("--port", type=int, default=5008, help="Which TCP port to use.")
     res = parser.parse_args()
     
