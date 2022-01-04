@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser.add_argument("--hflip", action='store_true', help="Vertically flip the camera image.")
     parser.add_argument("--rotate", metavar="ROTATION", type=int, choices=[0, 90, 180, 270], default=0, help="Rotate camera image (0, 90, 180, 270). If using libcamera, only 0 and 180 are supported. Default = 0")
     parser.add_argument("--port", type=int, default=5008, help="Which TCP port to use.")
-    parser.add_argument("--gain", type=float, default=10.0, help="Configure the gain of the camera (supported with libcamera and raspicam). Affects brightness of the images. Default = 10.0")
+    parser.add_argument("--gain", type=float, default=10.0, help="Configure the gain of the camera. Affects brightness of the images. Default = 10.0")
     res = parser.parse_args()
     
     if res.driver == "libcamera":
@@ -90,12 +90,16 @@ if __name__ == "__main__":
 
         # Apply settings using v4l2-ctl
         # Some cameras may not support all settings
-        # Note: When using new camera stack (libcamera) Pi camera will not work properly via v4l2. Many settings are unavailable
+        # Note: When using new camera stack (libcamera) Pi camera will not work properly via v4l2
         os.system("v4l2-ctl -d {0} --set-ctrl=rotate={1}".format(res.device, res.rotate))
         os.system("v4l2-ctl -d {0} --set-ctrl=horizontal_flip={1}".format(res.device, 1 if res.hflip else 0))
         os.system("v4l2-ctl -d {0} --set-ctrl=vertical_flip={1}".format(res.device, 1 if res.vflip else 0))
+
+        # Sometimes gain is split into two, other times it is one control. Sometimes it is not supported
         os.system("v4l2-ctl -d {0} --set-ctrl=analogue_gain={1}".format(res.device, analog_gain))
         os.system("v4l2-ctl -d {0} --set-ctrl=digital_gain={1}".format(res.device, digital_gain))
+        os.system("v4l2-ctl -d {0} --set-ctrl=gain={1}".format(res.device, res.gain))
+                
 
         if res.format == "h264":
             enc = "x264enc tune=zerolatency speed-preset=ultrafast bitrate={0} ! video/x-h264,profile={1} ! h264parse config-interval=-1".format(int(res.bitrate / 1000.0), res.profile)
