@@ -109,12 +109,13 @@ if __name__ == "__main__":
                 enc = "x264enc tune=zerolatency speed-preset=ultrafast bitrate={0} ! video/x-h264,profile={1} ! h264parse config_interval=-1 ! video/x-h264,stream-format=byte-stream,alignment=au".format(int(res.bitrate / 1000.0), res.profile)
             elif res.h264encoder == "libav-omx":
                 # Libav using HW accelerated OMX encoder.
+                # Originally included because of issues setting bitrate with omxh264enc
+                # Now included because it may be easier to get working in raspios bullseye
                 enc = "avenc_h264_omx bitrate={0} profile={1} ! h264parse config-interval=-1".format(res.bitrate, res.profile)
             elif res.h264encoder == "omx":
-                # Using omx264enc. Changing parameters seems to result in "could not initialize supporting library"
-                # on raspberry pi. As such, no options are provided (bitrate, control rate, profile, etc)
-                # Recommended to use libav-omx instead
-                enc = "omxh264enc ! h264parse config-interval=-1".format(res.bitrate)
+                # Using omxh264enc
+                # May not be easily available in raspios bullseye
+                enc = "omxh264enc target-bitrate={0} control-rate=variable ! video/x-h264,profile={1} ! h264parse config-interval=-1".format(res.bitrate, res.profile)
 
         cmd = "gst-launch-1.0 --no-fault v4l2src device={device} io-mode={iomode} ! " \
                 "video/x-raw,width={width},height={height},framerate={framerate}/1 ! " \
