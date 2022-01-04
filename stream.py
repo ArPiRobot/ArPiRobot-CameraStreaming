@@ -34,6 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--driver", type=str, choices=["libcamera", "raspicam", "v4l2"], default="libcamera", help="Which input device driver to use. V4L2 supports USB cameras. Libcamera and raspicam only support the pi camera modules (libcamera being the new stack). Default = libcamera")
     parser.add_argument("--device", type=str, default="", help="Device identifier for which camera to use (does not apply to libcamera or raspicam).")
     parser.add_argument("--iomode", metavar="IOMODE", type=str, default="auto", choices=["auto", "rw", "mmap", "userptr", "dmabuf", "dmabuf-import"], help="IO mode for v4l2 devices. If latency issues exist with USB webcam try using dmabuf. Default = auto")
+    parser.add_argument("--h264encoder", metavar="ENCODER", type=str, choices=["libav-omx", "omx", "libx264"], default="libav-omx", help="Which h.264 encoder to use with V4L2 (no effect with libcamera or raspicam drivers) Choices = libav-omx, omx, libx264. Default = libav-omx.")
     parser.add_argument("--width", type=int, default=640, help="Width of the video stream (must be a supported resolution). Default = 640")
     parser.add_argument("--height", type=int, default=480, help="Height of the video stream (must be a supported resolution). Default = 480")
     parser.add_argument("--framerate", type=int, default=30, help="Video stream framerate (must be supported for the active resolution). Default = 30")
@@ -56,7 +57,7 @@ if __name__ == "__main__":
         cmd = "libcamera-vid -t 0 --inline --width {width} --height {height} --framerate {framerate} " \
                 "--codec {format} --bitrate {bitrate} --profile {profile} --quality {quality} " \
                 " {vflip} {hflip} --rotation {rotate} --gain {gain} -n -o - | " \
-                "gst-launch-1.0 fdsrc fd=0 ! tcpserversink host=0.0.0.0 port={port}".format(
+                "gst-launch-1.0 --no-fault fdsrc fd=0 ! tcpserversink host=0.0.0.0 port={port}".format(
                     width=res.width, height=res.height, framerate=res.framerate, format=res.format, 
                     bitrate=res.bitrate, profile=res.profile, quality=res.quality, port=res.port, 
                     rotate=res.rotate, vflip=("--vflip" if res.vflip else ""), hflip=("--hflip" if res.hflip else ""),
@@ -76,7 +77,7 @@ if __name__ == "__main__":
         cmd = "raspivid -t 0 --inline --width {width} --height {height} --framerate {framerate} " \
                 "--codec {format} --bitrate {bitrate} --profile {profile} " \
                 " {vflip} {hflip} --rotation {rotate} --drc off --digitalgain {dg} --analoggain {ag} -n -o - | " \
-                "gst-launch-1.0 fdsrc fd=0 ! tcpserversink host=0.0.0.0 port={port}".format(
+                "gst-launch-1.0 --no-fault fdsrc fd=0 ! tcpserversink host=0.0.0.0 port={port}".format(
                     width=res.width, height=res.height, framerate=res.framerate, format=res.format.upper(), 
                     bitrate=res.bitrate, profile=res.profile, port=res.port, 
                     rotate=res.rotate, vflip=("--vflip" if res.vflip else ""), hflip=("--hflip" if res.hflip else ""),
@@ -101,12 +102,21 @@ if __name__ == "__main__":
         os.system("v4l2-ctl -d {0} --set-ctrl=gain={1}".format(res.device, res.gain))
                 
 
-        if res.format == "h264":
-            enc = "x264enc tune=zerolatency speed-preset=ultrafast bitrate={0} ! video/x-h264,profile={1} ! h264parse config-interval=-1".format(int(res.bitrate / 1000.0), res.profile)
-        elif res.format == "mjpeg":
+        if res.format == "mjpeg":
             enc = "jpegenc quality={0}".format(res.quality)
+        elif res.format == "h264":
+            if res.h264encoder == "libx264":
+                enc = "x264enc tune=zerolatency speed-preset=ultrafast bitrate={0} ! video/x-h264,profile={1} ! h264parse config_interval=-1 ! video/x-h264,stream-format=byte-stream,alignment=au".format(int(res.bitrate / 1000.0), res.profile)
+            elif res.h264encoder == "libav-omx":
+                # Libav using HW accelerated OMX encoder.
+                enc = "avenc_h264_omx bitrate={0} profile={1} ! h264parse config-interval=-1".format(res.bitrate, res.profile)
+            elif res.h264encoder == "omx":
+                # Using omx264enc. Changing parameters seems to result in "could not initialize supporting library"
+                # on raspberry pi. As such, no options are provided (bitrate, control rate, profile, etc)
+                # Recommended to use libav-omx instead
+                enc = "omxh264enc ! h264parse config-interval=-1".format(res.bitrate)
 
-        cmd = "gst-launch-1.0 v4l2src device={device} io-mode={iomode} ! " \
+        cmd = "gst-launch-1.0 --no-fault v4l2src device={device} io-mode={iomode} ! " \
                 "video/x-raw,width={width},height={height},framerate={framerate}/1 ! " \
                 "{enc} ! tcpserversink host=0.0.0.0 port={port}".format(device=res.device, iomode=res.iomode, 
                     width=res.width, height=res.height, framerate=res.framerate, enc=enc, port=res.port)
