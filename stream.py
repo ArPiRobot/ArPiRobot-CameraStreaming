@@ -45,8 +45,8 @@ if __name__ == "__main__":
     parser.add_argument("--vflip", action='store_true', help="Vertically flip the camera image.")
     parser.add_argument("--hflip", action='store_true', help="Vertically flip the camera image.")
     parser.add_argument("--rotate", metavar="ROTATION", type=int, choices=[0, 90, 180, 270], default=0, help="Rotate camera image (0, 90, 180, 270). If using libcamera, only 0 and 180 are supported. Default = 0")
-    parser.add_argument("--port", type=int, default=5008, help="Which TCP port to use.")
     parser.add_argument("--gain", type=float, default=10.0, help="Configure the gain of the camera. Affects brightness of the images. Default = 10.0")
+    parser.add_argument("--port", type=int, default=5008, help="Which TCP port to use.")
     res = parser.parse_args()
     
     if res.driver == "libcamera":
