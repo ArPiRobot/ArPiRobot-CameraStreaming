@@ -30,7 +30,7 @@
 trap 'kill $(jobs -p)' EXIT
 
 
-CONFIGS=/home/pi/*.camstream.txt
+CONFIGS=/home/pi/camstream/*.txt
 for c in $CONFIGS
 do
     arguments=`cat $c | sed ':a;N;$!ba;s/\n/ /g'`

@@ -36,9 +36,9 @@ Low latency, real-time camera streaming using a Raspberry Pi.
         ```
 
 
-## Starting a stream
+## Starting a Stream
 
-All streams are started using the `stream.py` script. This script can start a stream using one of several drivers and allows for many different configuration options. Many of these options are hardware specific and will not work with all cameras. The available options all work with the Pi camera modules when using the `raspicam` or `libcamera` stacks (though not necessarily using `v4l2` with the `raspicam` stack).
+All streams are started using the `camstream.py` script. This script can start a stream using one of several drivers and allows for many different configuration options. Many of these options are hardware specific and will not work with all cameras. The available options all work with the Pi camera modules when using the `raspicam` or `libcamera` stacks (though not necessarily using `v4l2` with the `raspicam` stack).
 
 The most commonly used options are used to adjust the video resolution and framerate, the format of the stream, or which camera stack is used. The camera stack is selected using the `--driver` flag, resolution is selected using the `--width` and `--height` flags, framerate is controlled using the `--framerate` flag, and the format is controlled using the `--format` flag. 
 
@@ -52,34 +52,34 @@ The following are a few examples of starting and customizing streams. Additional
 
 ```sh
 # Start a H.264 stream with a resolution of 640x480 at 30fps using the libcamera stack (pi camera only, no usb camera)
-./start.py --driver libcamera --width 640 --height 480 --framerate 30 --format h264
+./camstream.py --driver libcamera --width 640 --height 480 --framerate 30 --format h264
 
 # Adjust quality (and bandwidth usage) with the bandwidth flag (indicates a target bandwidth in bits/sec)
-./start.py --driver libcamera --width 640 --heigh 480 --framerate 30 --format h264 --bandwidth 2048000
+./camstream.py --driver libcamera --width 640 --heigh 480 --framerate 30 --format h264 --bandwidth 2048000
 
 
 # Start a MJPEG stream with a resolution of 1280x720 at 30fps using the raspicam stack (pi camera only, no usb camera)
-./start.py --driver raspicam --width 1280 --height 720 --framerate 30 --format mjpeg
+./camstream.py --driver raspicam --width 1280 --height 720 --framerate 30 --format mjpeg
 
 # To reduce bandwidth usage with MJPEG, use the quality flag (or with raspicam use bandwidth flag)
 # Quality from 1 to 100. Also works for v4l2 driver.
-./start --driver libcamera --width 1280 --height 720 --framerate 30 --format mjpeg --quality 30
+./camstream.py --driver libcamera --width 1280 --height 720 --framerate 30 --format mjpeg --quality 30
 
 # Raspicam driver does not support --quality flag. Use bandwidth instead
 # Bandwidth in bits / second (jpeg will be compressed enough to acheive the given bandwidth)
-./start --driver raspicam --width 1280 --height 720 --framerate 30 --format mjpeg --bandwidth 2048000
+./camstream.py --driver raspicam --width 1280 --height 720 --framerate 30 --format mjpeg --bandwidth 2048000
 
 # Use v4l2 driver with a USB webcam. Raspicam and libcamera only support Pi camera modules
 # Also have to specify which device v4l2 should use (--device argument)
 # If you have latency issues with a USB webcam, you can try --iomode dmabuf also (iomode only supported with v4l2)
 # List v4l2 devices with "v4l2-ctl --list-devices"
-./start --driver v4l2 --device /dev/video0 --width 1280 --height 720 --format h264
+./camstream.py --driver v4l2 --device /dev/video0 --width 1280 --height 720 --format h264
 
 
 # Any settings you do not specify take default values. As such even something as simple as no argument is allowed
 # However, there are some arguments you will typically want to provide
 # Starts a 640x480 stream at 30FPS using libcamera. Format is h264 with a bitrate of 2048000
-./start
+./camstream.py
 ```
 
 
@@ -169,3 +169,14 @@ To play a h264 stream, use the following command.
 ```sh
 mplayer -benchmark -nocache -fps 60 -demuxer h264es ffmpeg://tcp://remote_host:5008
 ```
+
+
+## Starting a Stream at Boot
+
+This repo includes a service and install script that can be used to configure one or more streams to launch at boot. After running `sudo ./install.sh` the service will be installed and two scripts will be placed in `/usr/local/bin`. These scripts are `camstream-launch.sh`, which is used by the installed service, and the actual `camstream.py` script used to launch the camera streams. In addition, `default.txt` will be copied to the `/home/pi/camstream` folder. 
+
+By default, the installed service is disabled (meaning it will not run at boot), but can be enabled with `sudo systemctl start camstream.service`. To enable the service so it starts automatically at boot, run `sudo systemctl enable camstream.service`. 
+
+When the service starts, it will run `camstream-launch.sh`. This script will read any file in `/home/pi/camstream` ending in `.txt` and use it to launch a camera stream. As such, you should not place other files in `/home/pi/camstream` that end with `.txt`. You can, however, place multiple `.txt` files there to run multiple camera streams.
+
+Each config file (`.txt` file in `/home/pi/camstream/`) is a set of arguments to be passed to the `camstream.py` script to start a stream. As with the command, you do not have to explicitly set every option. Any options not explicitly set will use their default values.

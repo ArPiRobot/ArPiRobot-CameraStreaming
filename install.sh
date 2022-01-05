@@ -39,8 +39,10 @@ cp camstream.py /usr/local/bin/
 chmod 755 /usr/local/bin/camstream-launch.sh
 chmod 755 /usr/local/bin/camstream.py
 
-cp default.camstream.txt /home/pi/
-chown pi:pi /home/pi/default.camstream.txt
+mkdir -p /home/pi/camstream
+chown pi:pi /home/pi/camstream
+cp default.txt /home/pi/camstream
+chown pi:pi /home/pi/camstream/default.txt
 
 systemctl stop camstream.service
 rm /lib/systemd/system/camstream.service
