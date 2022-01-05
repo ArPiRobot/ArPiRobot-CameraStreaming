@@ -7,4 +7,7 @@
 --profile main
 --rotate 180
 --gain 15.0
---port 5008
+--netmode rtsp
+--address localhost
+--port 8554
+--rtspkey stream

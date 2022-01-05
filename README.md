@@ -82,6 +82,27 @@ The following are a few examples of starting and customizing streams. Additional
 ./camstream.py
 ```
 
+Any stream can also be used with a different networking mode. Three networking modes are available: tcp, udp, and rtsp. TCP runs a TCP server on the Pi that clients connect to to play the stream. UDP mode sends the stream to a single, designated IP address and port. RTSP sends the stream to an RTSP server running on the Pi (this is not handled by this script, another piece of software such as [rtsp-simple-server](https://github.com/aler9/rtsp-simple-server)). Multiple clients can then connect to this server to play the stream.
+
+In TCP mode, the IP address is the address (of the Pi) to run the server on. `0.0.0.0` can be used to run the server on all of the Pi's IP addresses. In UDP mode, the address is the IP address of the device to send the stream to. In RTSP mode, the address is the address of the rtsp server (typically, the rtsp server runs on the Pi, so the address is `localhost`). The port is either the port to run a TCP server on, the port to send UDP data to, or the port the RTSP server is running on.
+
+TCP and UDP are easier to use than RTSP (as an rtsp server is not required), but each have drawbacks. TCP ensures packet delivery and order, which means that older frames must be sent before newer frames. This can cause significant latency with poor network connections. UDP does not ensure packet delivery or order, but the IP address of the client must be known by the Pi and only one client can play the stream easily. Because packet delivery is not gaurenteed, on low quality connections, the newest frame will always be displayed (but frames can be lost). RTSP can use either TCP or UDP as a transport and does not introduce much latency. Additionally, it acts as a server that allows clients to connect to the Pi. Either UDP or TCP can be used as a transport allowing the advantages of UDP on low quality connections.
+
+The network mode is controlled with the `--netmode` flag and the address and port are adjusted using `--address` and `--port`. Any above example can be modified to use udp or rtsp using these options. For example, if you run `rtsp-simple-server` on the Pi use the following
+
+```sh
+# H.264
+./camstream.py --driver raspicam --width 640 --height 480 --framerate 30 --format h264 --netmode rtsp --address localhost --port 8554
+
+# MJPEG
+./camstream.py --driver raspicam --width 640 --height 480 --framerate 30 --format mjpeg --netmode rtsp --address localhost --port 8554
+```
+
+With RTSP, you can also have multiple streams on the same server. Each stream has it's own path on the server, which can be set using the `--rtspkey` flag. For example, the following command results in a stream on the server at the path `rtsp://server_address:server_port/my_stream_key
+
+```sh
+./camstream.py --driver raspicam --width 640 --height 480 --framerate 30 --format mjpeg --netmode rtsp --address localhost --port 8554 --rtspkey my_stream_key
+```
 
 All Available options:
 
@@ -105,72 +126,7 @@ All Available options:
 | --netmode     | tcp           | tcp, udp, rtsp             | Which networking mode to use. TCP runs a server that clients connect to. TCP ensures packet delivery and order, but with poor quality connections this can cause latency as older frames must be sent before newer ones. When using UDP, packet delivery and order is not gaurenteed, meaning with poor quality connections frames may be lost causing some corruption of video (mostly with h264), but allows higher bandwidths and ensures the newest frame is always displayed by the client. UDP is also not a server model. The Pi must know the IP address of the device playing the stream. RTSP relies on a server running on the Pi, but is capable of using UDP transports with a client server model. |
 | --address     | 0.0.0.0       | strings                    | Which IP address to either run the TCP server on (0.0.0.0 means all IP addresses of the device) or which IP address to send UDP datagrams to. |
 | --port        | 5008          | integers                   | Which port to run the TCP server on for the camera streams. If UDP mode, this is the port to send UDP datagrams to at the given address. If streaming multiple cameras, each will need its own port. |
-
-
-## Playing the Stream
-
-There are several tools that can be used for playing the stream. They are listed below with information about the tool and the pros and cons of the tool. Recommended commands with each tool are provided below the table. 
-
-| Tool                    | Recommended For           | Notes (based on my testing)                                                                  |
-| ----------------------- | ------------------------- | -------------------------------------------------------------------------------------------- |
-| [ffmpeg](https://ffmpeg.org/)'s ffplay       | MJPEG or H.264            | Works well for either mjpeg or h264, but often less performant than mpv for h264. Consistent performance across platforms. |
-| [gstreamer](https://gstreamer.freedesktop.org/)           |                       | Works well for mjpeg decoding. Software decoding of h264 introduces latency, hardware decoders are platforms specific and require pipeline changes. Not bad performance, but mpv is often better for h264. For mjpeg, ffplay is often easier and more consistent across platforms. |
-| [mpv](https://mpv.io/)                 | H.264                     | Very performant player capable of using many different types of h264 hardware accelerated decoding. Unfortunately, seems to be incapable of playing mjpeg streams. |
-| [mplayer](http://www.mplayerhq.hu/design7/dload.html)             |                           | Plays both h264 and mjpeg decently, but inconsistent at times across platforms. |
-
-
-The following are recommendations for using each tool to play streams from the Pi. These recommended commands include many flags to reduce playback latency. Specifically what is done depends on the tool, but generally speaking any form of buffering is disabled and the *playback framerate is set to a value higher than the stream's framerate*. Generally, when playing a video it should play at a constant rate to avoid having playback too fast or too slow however, in the case of a realtime stream the newest frame should always be displayed. Configuring the player to play the stream faster than the frames come from the stream help acheive this goal. Generally, using a playback framerate twice that of the stream framerate produces good results.
-
-Additionally, there are other parts of many players that introduce latency. These have been disabled when possible in the commands given below the table.
-
-In each command the IP address of the Pi must be specified. In the commands, `remote_host` is used. Replace this with the IP address of the Pi.
-
-#### ffplay
-
-Playing either an mjpeg or h264 stream. Change the FPS argument and `remote_host` as needed. If you are using UDP to stream instead of TCP, change the address from `tcp://remote_host:5008` to `udp://localhost:5008`.
-
-```sh
-ffplay -probesize 32 -framerate 60 -fflags nobuffer -flags low_delay -framedrop -sync ext tcp://remote_host:5008
-```
-
-#### gstreamer
-
-Playing a mjpeg stream (should work on any platform). Change `remote_host` to the Pi's IP address. For UDP replace `tcpclientsrc host=remote_host port=5008` with `udpsrc address=localhost port=5008`.
-
-```sh
-gst-launch-1.0 tcpclientsrc host=remote_host port=5008 ! jpegdec ! autovideosink
-```
-
-Playing a h264 stream (tested on linux). `avdec_h264` is likely available on most platforms, however other decoders may need to be used instead. Platform specific hardware accelerated decoders can also be used to reduce latency. Change `remote_host` to the Pi's IP address.
-
-```
-gst-launch-1.0 tcpclientsrc host=remote_host port=5008 ! h264parse ! avdec_h264 ! autovideosink
-```
-
-#### mpv
-
-MPV typically plays h264 streams well and can take advantage of hardware accelerated decoding on many platforms resulting in very little latency due to decoding. However, I have not been able to get mpv to play an mjpeg stream. Change `remote_host` to the Pi's IP address and adjust the fps as needed. If you are using UDP to stream instead of TCP, change the address from `tcp://remote_host:5008` to `udp://localhost:5008`.
-
-```sh
-mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no tcp://remote_host:5008
-```
-
-
-#### mplayer
-
-Mplayer frequently is unable to determine the stream format automatically while using options to reduce latency. As such, the demuxer that is to be used must be specified.
-
-To play an mjpeg stream, use the following command. The framerate may be less than ideal. Remember to change `remote_host`. If you are using UDP to stream instead of TCP, change the address from `tcp://remote_host:5008` to `udp://localhost:5008`.
-
-```sh
-mplayer -benchmark -nocache -fps 60 -demuxer lavf ffmpeg://tcp://remote_host:5008
-```
-
-To play a h264 stream, use the following command.
-
-```sh
-mplayer -benchmark -nocache -fps 60 -demuxer h264es ffmpeg://tcp://remote_host:5008
-```
+| --rtspkey     | stream        | strings                    | Path for this stream on the rtsp server. |
 
 
 ## Starting a Stream at Boot
@@ -182,3 +138,81 @@ By default, the installed service is disabled (meaning it will not run at boot),
 When the service starts, it will run `camstream-launch.sh`. This script will read any file in `/home/pi/camstream` ending in `.txt` and use it to launch a camera stream. As such, you should not place other files in `/home/pi/camstream` that end with `.txt`. You can, however, place multiple `.txt` files there to run multiple camera streams.
 
 Each config file (`.txt` file in `/home/pi/camstream/`) is a set of arguments to be passed to the `camstream.py` script to start a stream. As with the command, you do not have to explicitly set every option. Any options not explicitly set will use their default values.
+
+
+## Playing the Stream
+
+There are several tools that can be used for playing the stream. They are listed below with information about the tool and the pros and cons of the tool. Recommended commands with each tool are provided below the table. 
+
+| Tool                    | Recommended For           | Notes (based on my testing)                                                                  |
+| ----------------------- | ------------------------- | -------------------------------------------------------------------------------------------- |
+| [ffmpeg](https://ffmpeg.org/)'s ffplay       | MJPEG or H.264            | Works well for either mjpeg or h264, but often less performant than mpv for h264. Consistent performance across platforms. |
+| [mpv](https://mpv.io/)                 | H.264                     | Very performant player capable of using many different types of h264 hardware accelerated decoding. Unfortunately, seems to be incapable of playing mjpeg streams. |
+| [mplayer](http://www.mplayerhq.hu/design7/dload.html)             |                           | Plays both h264 and mjpeg decently, but inconsistent at times across platforms. |
+
+Custom gstreamer pipelines could also be setup, but it is generally more complex to actually setup.
+
+The following are recommendations for using each tool to play streams from the Pi. These recommended commands include many flags to reduce playback latency. Specifically what is done depends on the tool, but generally speaking any form of buffering is disabled and the *playback framerate is set to a value higher than the stream's framerate*. Generally, when playing a video it should play at a constant rate to avoid having playback too fast or too slow however, in the case of a realtime stream the newest frame should always be displayed. Configuring the player to play the stream faster than the frames come from the stream help acheive this goal. Generally, using a playback framerate twice that of the stream framerate produces good results.
+
+Additionally, there are other parts of many players that introduce latency. These have been disabled when possible in the commands given below the table.
+
+In each command the IP address of the Pi must be specified. In the commands, `remote_host` is used. Replace this with the IP address of the Pi.
+
+#### ffplay
+
+```sh
+# TCP MJPEG or H264
+ffplay -probesize 32 -framerate 60 -fflags nobuffer -flags low_delay -framedrop -sync ext tcp://remote_host:5008
+
+# UDP MJPEG or H264
+ffplay -probesize 32 -framerate 60 -fflags nobuffer -flags low_delay -framedrop -sync ext udp://localhost:5008
+
+# RTSP MJPEG or H264 (framerate option not needed)
+ffplay -probesize 32 -fflags nobuffer -flags low_delay -framedrop -sync ext rtsp://remote_host:8554/stream
+```
+
+#### mpv
+
+```sh
+
+```
+
+#### mpv
+
+MPV typically plays h264 streams well and can take advantage of hardware accelerated decoding on many platforms resulting in very little latency due to decoding. However, I have not been able to get mpv to play an mjpeg stream. Change `remote_host` to the Pi's IP address and adjust the fps as needed. If you are using UDP to stream instead of TCP, change the address from `tcp://remote_host:5008` to `udp://localhost:5008`.
+
+```sh
+# TCP (H264, MJPEG does not seem to work)
+mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no tcp://remote_host:5008
+
+# UDP (H264, MJPEG does not seem to work)
+mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no udp://localhost:5008
+
+# RTSP (H264 or MJPEG)
+mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no rtsp://remote_host:8554/stream
+```
+
+
+#### mplayer
+
+```sh
+# TCP, MJPEG
+mplayer -benchmark -nocache -fps 60 -demuxer lavf ffmpeg://tcp://remote_host:5008
+
+# UDP, MJPEG (sometimes works, using mplayer and udp is not recommended)
+
+mplayer -benchmark -nocache -fps 60 -demuxer lavf ffmpeg://udp://localhost:5008
+
+# RTSP, MJPEG (sometimes works, using mplayer and rtsp is not recommended)
+mplayer -benchmark -nocache -fps 60 -demuxer lavf rtsp://remote_host:8554/stream
+
+# TCP, H264
+mplayer -benchmark -nocache -fps 60 -demuxer h264es ffmpeg://tcp://remote_host:5008
+
+# UDP, H264 (sometimes works, using mplayer and udp is not recommended)
+
+mplayer -benchmark -nocache -fps 60 -demuxer h264es ffmpeg://udp://localhost:5008
+
+# RTSP, H264 (sometimes works, using mplayer and rtsp is not recommended)
+mplayer -benchmark -nocache -fps 60 -demuxer h264es rtsp://remote_host:8554/stream
+```
