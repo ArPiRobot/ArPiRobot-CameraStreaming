@@ -174,14 +174,6 @@ ffplay -probesize 32 -fflags nobuffer -flags low_delay -framedrop -sync ext rtsp
 #### mpv
 
 ```sh
-
-```
-
-#### mpv
-
-MPV typically plays h264 streams well and can take advantage of hardware accelerated decoding on many platforms resulting in very little latency due to decoding. However, I have not been able to get mpv to play an mjpeg stream. Change `remote_host` to the Pi's IP address and adjust the fps as needed. If you are using UDP to stream instead of TCP, change the address from `tcp://remote_host:5008` to `udp://localhost:5008`.
-
-```sh
 # TCP (H264, MJPEG does not seem to work)
 mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no tcp://remote_host:5008
 
