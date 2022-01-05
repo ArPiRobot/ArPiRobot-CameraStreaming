@@ -46,7 +46,10 @@ if __name__ == "__main__":
     parser.add_argument("--hflip", action='store_true', help="Vertically flip the camera image.")
     parser.add_argument("--rotate", metavar="ROTATION", type=int, choices=[0, 90, 180, 270], default=0, help="Rotate camera image (0, 90, 180, 270). If using libcamera, only 0 and 180 are supported. Default = 0")
     parser.add_argument("--gain", type=float, default=10.0, help="Configure the gain of the camera. Affects brightness of the images. Default = 10.0")
-    parser.add_argument("--port", type=int, default=5008, help="Which TCP port to use.")
+    parser.add_argument("--netmode", type=str, choices=["tcp", "udp", "rtsp"], default="tcp", help="Chooses which networking protocol to use. TCP runs a server on the Pi that clients connect to and ensures packaet delivery and order. UDP sends frames to the client, but the Pi must know the client's IP address. UDP does not gaurentee packet delivery or order, but can prevent lag with bad quality connections. RTSP uses a server running on the Pi (another program) but is capable of using udp transports.")
+    parser.add_argument("--address", type=str, default="0.0.0.0", help="Which IP address to either run the TCP server on or send UDP datagrams to. For RTSP this is the address of the RTSP server.")
+    parser.add_argument("--port", type=int, default=5008, help="Which port to use for TCP server or which port to send UDP datagrams to. For RTSP, this is port of RTSP server.")
+    parser.add_argument("--rtspkey", type=str, default="stream", help="Only applies to RTSP net mode. This is the key of the stream (name after server's URL).")
     res = parser.parse_args()
     
     if res.driver == "libcamera":
@@ -57,9 +60,9 @@ if __name__ == "__main__":
         cmd = "libcamera-vid -t 0 --inline --width {width} --height {height} --framerate {framerate} " \
                 "--codec {format} --bitrate {bitrate} --profile {profile} --quality {quality} " \
                 " {vflip} {hflip} --rotation {rotate} --gain {gain} -n -o - | " \
-                "gst-launch-1.0 --no-fault fdsrc fd=0 ! tcpserversink host=0.0.0.0 port={port}".format(
+                "gst-launch-1.0 --no-fault fdsrc fd=0".format(
                     width=res.width, height=res.height, framerate=res.framerate, format=res.format, 
-                    bitrate=res.bitrate, profile=res.profile, quality=res.quality, port=res.port, 
+                    bitrate=res.bitrate, profile=res.profile, quality=res.quality, 
                     rotate=res.rotate, vflip=("--vflip" if res.vflip else ""), hflip=("--hflip" if res.hflip else ""),
                     gain=res.gain)
     elif res.driver == "raspicam":
@@ -77,9 +80,9 @@ if __name__ == "__main__":
         cmd = "raspivid -t 0 --inline --width {width} --height {height} --framerate {framerate} " \
                 "--codec {format} --bitrate {bitrate} --profile {profile} " \
                 " {vflip} {hflip} --rotation {rotate} --drc off --digitalgain {dg} --analoggain {ag} -n -o - | " \
-                "gst-launch-1.0 --no-fault fdsrc fd=0 ! tcpserversink host=0.0.0.0 port={port}".format(
+                "gst-launch-1.0 --no-fault fdsrc fd=0".format(
                     width=res.width, height=res.height, framerate=res.framerate, format=res.format.upper(), 
-                    bitrate=res.bitrate, profile=res.profile, port=res.port, 
+                    bitrate=res.bitrate, profile=res.profile, 
                     rotate=res.rotate, vflip=("--vflip" if res.vflip else ""), hflip=("--hflip" if res.hflip else ""),
                     dg=digital_gain, ag=analog_gain)
     elif res.driver == "v4l2":
@@ -119,8 +122,20 @@ if __name__ == "__main__":
 
         cmd = "gst-launch-1.0 --no-fault v4l2src device={device} io-mode={iomode} ! " \
                 "video/x-raw,width={width},height={height},framerate={framerate}/1 ! " \
-                "{enc} ! tcpserversink host=0.0.0.0 port={port}".format(device=res.device, iomode=res.iomode, 
-                    width=res.width, height=res.height, framerate=res.framerate, enc=enc, port=res.port)
+                "{enc}".format(device=res.device, iomode=res.iomode, 
+                    width=res.width, height=res.height, framerate=res.framerate, enc=enc)
+
+    if res.netmode == "tcp":
+        cmd = "{cmd} ! tcpserversink host={address} port={port}".format(cmd=cmd, address=res.address, port=res.port)
+    elif res.netmode == "udp":
+        cmd = "{cmd} ! udpsink host={address} port={port}".format(cmd=cmd, address=res.address, port=res.port)
+    elif res.netmode == "rtsp":
+        if res.format == "h264":
+            parser = "h264parse"
+        elif res.format == "mjpeg":
+            parser = "jpegparse"
+        cmd = "{cmd} ! {parser} ! rtspclientsink name=s location=rtsp://{address}:{port}/{rtsp_key}".format(
+            cmd=cmd, address=res.address, port=res.port, rtsp_key=res.rtspkey, parser=parser)
 
     print(cmd)
     os.system(cmd)

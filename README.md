@@ -11,7 +11,7 @@ Low latency, real-time camera streaming using a Raspberry Pi.
     - Run
 
         ```sh
-        sudo apt install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl
+        sudo apt install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-rtsp gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl
         ```
 
     - For buster and older, you may also want to install the gstreamer-omx plugins. These are not available for bullseye
@@ -102,7 +102,9 @@ All Available options:
 | --hflip       | not present   | flag present = true, else false | If this flag is present, the video will be flipped horizontally. |
 | --rotate      | 0             | 0, 90, 180, 270 (0, 180 for libcamera) | Used to rotate the video. Often, only 0 and 180 degrees will be supported. |
 | --gain        | 10.0          | numbers                    | Use with the libcamera and raspicam stacks to control the camera's "sensativity" to light. In effect, higher gain means the camera will do better in lower light (though there is a limit to this). Often exceeding a gain of 15 or 20 is not going to cause any major change. |
-| --port        | 5008          | integers                   | Which port to run the TCP server on for the camera streams. If streaming multiple cameras, each will need its own port. |
+| --netmode     | tcp           | tcp, udp, rtsp             | Which networking mode to use. TCP runs a server that clients connect to. TCP ensures packet delivery and order, but with poor quality connections this can cause latency as older frames must be sent before newer ones. When using UDP, packet delivery and order is not gaurenteed, meaning with poor quality connections frames may be lost causing some corruption of video (mostly with h264), but allows higher bandwidths and ensures the newest frame is always displayed by the client. UDP is also not a server model. The Pi must know the IP address of the device playing the stream. RTSP relies on a server running on the Pi, but is capable of using UDP transports with a client server model. |
+| --address     | 0.0.0.0       | strings                    | Which IP address to either run the TCP server on (0.0.0.0 means all IP addresses of the device) or which IP address to send UDP datagrams to. |
+| --port        | 5008          | integers                   | Which port to run the TCP server on for the camera streams. If UDP mode, this is the port to send UDP datagrams to at the given address. If streaming multiple cameras, each will need its own port. |
 
 
 ## Playing the Stream
@@ -125,7 +127,7 @@ In each command the IP address of the Pi must be specified. In the commands, `re
 
 #### ffplay
 
-Playing either an mjpeg or h264 stream. Change the FPS argument and `remote_host` as needed.
+Playing either an mjpeg or h264 stream. Change the FPS argument and `remote_host` as needed. If you are using UDP to stream instead of TCP, change the address from `tcp://remote_host:5008` to `udp://localhost:5008`.
 
 ```sh
 ffplay -probesize 32 -framerate 60 -fflags nobuffer -flags low_delay -framedrop -sync ext tcp://remote_host:5008
@@ -133,7 +135,7 @@ ffplay -probesize 32 -framerate 60 -fflags nobuffer -flags low_delay -framedrop 
 
 #### gstreamer
 
-Playing a mjpeg stream (should work on any platform). Change `remote_host` to the Pi's IP address.
+Playing a mjpeg stream (should work on any platform). Change `remote_host` to the Pi's IP address. For UDP replace `tcpclientsrc host=remote_host port=5008` with `udpsrc address=localhost port=5008`.
 
 ```sh
 gst-launch-1.0 tcpclientsrc host=remote_host port=5008 ! jpegdec ! autovideosink
@@ -147,7 +149,7 @@ gst-launch-1.0 tcpclientsrc host=remote_host port=5008 ! h264parse ! avdec_h264 
 
 #### mpv
 
-MPV typically plays h264 streams well and can take advantage of hardware accelerated decoding on many platforms resulting in very little latency due to decoding. However, I have not been able to get mpv to play an mjpeg stream. Change `remote_host` to the Pi's IP address and adjust the fps as needed.
+MPV typically plays h264 streams well and can take advantage of hardware accelerated decoding on many platforms resulting in very little latency due to decoding. However, I have not been able to get mpv to play an mjpeg stream. Change `remote_host` to the Pi's IP address and adjust the fps as needed. If you are using UDP to stream instead of TCP, change the address from `tcp://remote_host:5008` to `udp://localhost:5008`.
 
 ```sh
 mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no tcp://remote_host:5008
@@ -158,7 +160,7 @@ mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no
 
 Mplayer frequently is unable to determine the stream format automatically while using options to reduce latency. As such, the demuxer that is to be used must be specified.
 
-To play an mjpeg stream, use the following command. The framerate may be less than ideal. Remember to change `remote_host`.
+To play an mjpeg stream, use the following command. The framerate may be less than ideal. Remember to change `remote_host`. If you are using UDP to stream instead of TCP, change the address from `tcp://remote_host:5008` to `udp://localhost:5008`.
 
 ```sh
 mplayer -benchmark -nocache -fps 60 -demuxer lavf ffmpeg://tcp://remote_host:5008
