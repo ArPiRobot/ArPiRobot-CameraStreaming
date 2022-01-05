@@ -1,0 +1,10 @@
+--driver libcamera
+--width 640
+--height 480
+--framerate 30
+--format h264
+--bitrate 2048000
+--profile main
+--rotate 180
+--gain 15.0
+--port 5008
