@@ -34,7 +34,7 @@ CONFIGS=/home/pi/camstream/*.txt
 for c in $CONFIGS
 do
     arguments=`cat $c | sed ':a;N;$!ba;s/\n/ /g'`
-    /usr/local/bin/stream.py $arguments &
+    /usr/local/bin/camstream.py $arguments &
 done
 
 echo "Streams running. Press Ctrl+C to kill all."
