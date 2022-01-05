@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #####################################################################################
 #
 # Copyright 2020 Marcus Behel
@@ -17,20 +18,26 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with ArPiRobot-CameraStreaming.  If not, see <https://www.gnu.org/licenses/>.
 #####################################################################################
-# script:      camerastream.service
-# description: Start camera streaming as a service
+# script:      arpirobot-camerastream.sh
+# description: Start camera streaming for one or more cameras by loading flags 
+#              from a file
 # author:      Marcus Behel
 # version:     v1.0.0
 #####################################################################################
 
-[Unit]
-Description=Service to run ArPiRobot camera streams
-After=multi-user.target
 
-[Service]
-Type=simple
-User=pi
-ExecStart=/usr/local/bin/arpirobot-camstream.sh
+# Kill forked processes on exit
+trap 'kill $(jobs -p)' EXIT
 
-[Install]
-WantedBy=multi-user.target
+
+CONFIGS=/home/pi/*.camstream.txt
+for c in $CONFIGS
+do
+    arguments=`cat $c | sed ':a;N;$!ba;s/\n/ /g'`
+    /usr/local/bin/stream.py $arguments &
+done
+
+echo "Streams running. Press Ctrl+C to kill all."
+
+wait
+

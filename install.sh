@@ -34,13 +34,17 @@ fi
 pushd $DIR > /dev/null
 
 
-cp arpirobot-camstream.sh /usr/local/bin
-cp stream.py /usr/local/bin/
-chmod 755 /usr/local/bin/arpirobot-camerastream.sh
-chmod 755 /usr/local/bin/stream.py
+cp camstream-launch.sh /usr/local/bin/
+cp camstream.py /usr/local/bin/
+chmod 755 /usr/local/bin/camstream-launch.sh
+chmod 755 /usr/local/bin/camstream.py
 
-systemctl stop camerastream.service
-cp camerastream.service /lib/systemd/system/
+cp default.camstream.txt /home/pi/
+chown pi:pi /home/pi/default.camstream.txt
+
+systemctl stop camstream.service
+rm /lib/systemd/system/camstream.service
+cp camstream.service /lib/systemd/system/
 systemctl daemon-reload
 
 
