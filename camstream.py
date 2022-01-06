@@ -18,8 +18,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with ArPiRobot-CameraStreaming.  If not, see <https://www.gnu.org/licenses/>.
 ####################################################################################################
-# script:      stream_libcamera.py
-# description: Starts a stream using the Pi camera using the newer camera stack (libcamera).
+# script:      camstream.py
+# description: Starts a stream using a camera connected to a raspberry pi. Capable of using many 
+#              camera stacks compatible with both Pi camera modules and USB webcams.
+#              Supports many options to configure the stream. Designed for 
+#              low latency / real-time streams
 #              The system must be configured for the new camera stack (if using buster or older).
 # author:      Marcus Behel
 # date:        1-2-2022

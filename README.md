@@ -142,6 +142,21 @@ Each config file (`.txt` file in `/home/pi/camstream/`) is a set of arguments to
 
 ## Playing the Stream
 
+#### Play Stream Script
+
+The `playstream.py` script can be used to launch one of the tools mentioned below to play a stream. The tools must be installed separately and be in the system path. On Linux systems, all three players should be available using the system's package manager. On Windows or macOS, they can be downloaded and installed (or sometimes you have to download a zip, and extract it), but you may have to add commands to your path. Alternatively, ffmpeg (includes ffplay) and mpv should be available using the [scoop](https://scoop.sh/) package manager for windows or the [homebrew](https://brew.sh/) package manager for macOS.
+
+Once the player you will use is installed use the following command to play the stream (on windows, you cannot run the script directly, instead use `python playstream.py` or `python3 playstream.py` depending on how you installed python).
+
+```sh
+./playstream.py --player ffplay --netmode rtsp --address 192.168.10.1 --port 8554 --rtspkey stream
+```
+
+There are several options that can be changed to use different players or handle different types of streams.
+
+
+#### Information and Manual Method(s)
+
 There are several tools that can be used for playing the stream. They are listed below with information about the tool and the pros and cons of the tool. Recommended commands with each tool are provided below the table. 
 
 | Tool                    | Recommended For           | Notes (based on my testing)                                                                  |
@@ -174,13 +189,13 @@ ffplay -probesize 32 -fflags nobuffer -flags low_delay -framedrop -sync ext rtsp
 #### mpv
 
 ```sh
-# TCP (H264, MJPEG does not seem to work)
+# TCP H264, MJPEG add --demuxer-lavf-probescore=10
 mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no tcp://remote_host:5008
 
-# UDP (H264, MJPEG does not seem to work)
+# UDP H264, MJPEG add --demuxer-lavf-probescore=10
 mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no udp://localhost:5008
 
-# RTSP (H264 or MJPEG)
+# RTSP H264 and MJPEG. Often don't need --demuxer-lavf-probescore=10 for MJPEG
 mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no rtsp://remote_host:8554/stream
 ```
 
@@ -191,20 +206,20 @@ mpv --no-cache --untimed --profile=low-latency -no-correct-pts --fps=60 --osc=no
 # TCP, MJPEG
 mplayer -benchmark -nocache -fps 60 -demuxer lavf ffmpeg://tcp://remote_host:5008
 
-# UDP, MJPEG (sometimes works, using mplayer and udp is not recommended)
+# UDP, MJPEG
 
 mplayer -benchmark -nocache -fps 60 -demuxer lavf ffmpeg://udp://localhost:5008
 
-# RTSP, MJPEG (sometimes works, using mplayer and rtsp is not recommended)
+# RTSP, MJPEG
 mplayer -benchmark -nocache -fps 60 -demuxer lavf rtsp://remote_host:8554/stream
 
 # TCP, H264
 mplayer -benchmark -nocache -fps 60 -demuxer h264es ffmpeg://tcp://remote_host:5008
 
-# UDP, H264 (sometimes works, using mplayer and udp is not recommended)
+# UDP, H264
 
 mplayer -benchmark -nocache -fps 60 -demuxer h264es ffmpeg://udp://localhost:5008
 
-# RTSP, H264 (sometimes works, using mplayer and rtsp is not recommended)
+# RTSP, H264d)
 mplayer -benchmark -nocache -fps 60 -demuxer h264es rtsp://remote_host:8554/stream
 ```
