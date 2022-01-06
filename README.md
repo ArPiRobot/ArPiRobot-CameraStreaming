@@ -142,7 +142,7 @@ Each config file (`.txt` file in `/home/pi/camstream/`) is a set of arguments to
 
 ## Playing the Stream
 
-#### Play Stream Script
+#### Play Stream Script (recommended)
 
 The `playstream.py` script can be used to launch one of the tools mentioned below to play a stream. The tools must be installed separately and be in the system path. On Linux systems, all three players should be available using the system's package manager. On Windows or macOS, they can be downloaded and installed (or sometimes you have to download a zip, and extract it), but you may have to add commands to your path. Alternatively, ffmpeg (includes ffplay) and mpv should be available using the [scoop](https://scoop.sh/) package manager for windows or the [homebrew](https://brew.sh/) package manager for macOS.
 
@@ -154,8 +154,18 @@ Once the player you will use is installed use the following command to play the 
 
 There are several options that can be changed to use different players or handle different types of streams.
 
+| Option / flag | Default Value | Possible Values            | Description                                                               |
+| ------------- | ------------- | -------------------------- | ------------------------------------------------------------------------- |
+| --netmode     | tcp           | tcp, udp, rtsp             | Which network mode the stream is using. |
+| --address     | 127.0.0.1 for udp, else 192.168.10.1 | strings | Address to stream from. For TCP and RTSP this is the address of the Pi (running a TCP or RTSP server). For UDP this is generally localhost or 127.0.0.1 |
+| --port        | 8554 for rtsp, else 5008 | integers        | Which port to stream from. For TCP and RTSP this is the server's port. For UDP this is the port data is being sent to. |
+| --rtspkey     | stream        | strings                    | Path on the RTSP server of the stream. Only applies in rtsp mode. |
+| --format      | auto          | auto, h264, mjpeg          | Some players can detect the stream format. In these cases, auto can be used. Otherwise you can specify either h264 or mjpeg. |
+| --player      | auto          | auto, ffplay, mpv, mplayer | Which player to use. If auto, the first detected player on the system is used. Players are searched for in the following order: ffplay, mpv, mplayer. |
+| --framerate   | 60            | integers                   | Framerate of the stream. Generally, it is recommended to use twice the actual framerate of the stream to reduce latency. |
 
-#### Information and Manual Method(s)
+
+#### Manual Method
 
 There are several tools that can be used for playing the stream. They are listed below with information about the tool and the pros and cons of the tool. Recommended commands with each tool are provided below the table. 
 
