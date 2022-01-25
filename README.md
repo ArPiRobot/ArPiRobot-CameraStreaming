@@ -55,7 +55,7 @@ The following are a few examples of starting and customizing streams. Additional
 ./camstream.py --driver libcamera --width 640 --height 480 --framerate 30 --format h264
 
 # Adjust quality (and bandwidth usage) with the bandwidth flag (indicates a target bandwidth in bits/sec)
-./camstream.py --driver libcamera --width 640 --heigh 480 --framerate 30 --format h264 --bandwidth 2048000
+./camstream.py --driver libcamera --width 640 --heigh 480 --framerate 30 --format h264 --bitrate 2048000
 
 
 # Start a MJPEG stream with a resolution of 1280x720 at 30fps using the raspicam stack (pi camera only, no usb camera)
@@ -67,7 +67,7 @@ The following are a few examples of starting and customizing streams. Additional
 
 # Raspicam driver does not support --quality flag. Use bandwidth instead
 # Bandwidth in bits / second (jpeg will be compressed enough to acheive the given bandwidth)
-./camstream.py --driver raspicam --width 1280 --height 720 --framerate 30 --format mjpeg --bandwidth 2048000
+./camstream.py --driver raspicam --width 1280 --height 720 --framerate 30 --format mjpeg --bitrate 2048000
 
 # Use v4l2 driver with a USB webcam. Raspicam and libcamera only support Pi camera modules
 # Also have to specify which device v4l2 should use (--device argument)
@@ -116,7 +116,7 @@ All Available options:
 | --height      | 480           | integers                   | Height of the video stream resolution. Must be supported by the camera. | 
 | --framerate   | 30            | integers                   | Framerate of the video stream. Must be supported by the camera for the given resolution. |
 | --format      | h264          | h264, mjpeg                | Which format to stream in. H.264 is often better (lower bandwidth), but can cause some latency. MJPEG is easier to encode and decode, but requires higher bandwidth for the same resolution, famerate, and quality. |
-| --bitrate     | 2048000       | integers                   | For h264 streams, this is a desired bitrate of the video stream in bits / sec (ex 2048000 = 2kbits / sec). For mjpeg, this generally has no effect. However, when using the raspicam driver, this option has the same effect for mjpeg as it does for h264. In this case, the desired bitrate indirectly controls the jpeg compression quality. |
+| --bitrate     | 2048000       | integers                   | For h264 streams, this is a desired bitrate of the video stream in bits / sec (ex 2048000 = 2Mbits / sec). For mjpeg, this generally has no effect. However, when using the raspicam driver, this option has the same effect for mjpeg as it does for h264. In this case, the desired bitrate indirectly controls the jpeg compression quality. |
 | --profile     | baseline      | baseline, main, high       | Which h264 profile to use. |
 | --quality     | 50            | integers 1-100 (inclusive) | Quality of jpeg compression when using a mjpeg stream. This option has no effect if using an h264 format. This also does not work with the raspicam driver. |
 | --vflip       | not present   | flag present = true, else false | If this flag is present, the video will be flipped vertically. | 
