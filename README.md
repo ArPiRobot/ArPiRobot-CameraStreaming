@@ -115,6 +115,7 @@ All Available options:
 | --width       | 640           | integers                   | Width of the video stream resolution. Must be supported by the camera. |
 | --height      | 480           | integers                   | Height of the video stream resolution. Must be supported by the camera. | 
 | --framerate   | 30            | integers                   | Framerate of the video stream. Must be supported by the camera for the given resolution. |
+| --vconvert    | not present   | flag present = true, else false | If this flag is present, input will be passed through videoconvert before passing to the encoder. Only applies to v4l2 pipeline. |
 | --format      | h264          | h264, mjpeg                | Which format to stream in. H.264 is often better (lower bandwidth), but can cause some latency. MJPEG is easier to encode and decode, but requires higher bandwidth for the same resolution, famerate, and quality. |
 | --bitrate     | 2048000       | integers                   | For h264 streams, this is a desired bitrate of the video stream in bits / sec (ex 2048000 = 2Mbits / sec). For mjpeg, this generally has no effect. However, when using the raspicam driver, this option has the same effect for mjpeg as it does for h264. In this case, the desired bitrate indirectly controls the jpeg compression quality. |
 | --profile     | baseline      | baseline, main, high       | Which h264 profile to use. |

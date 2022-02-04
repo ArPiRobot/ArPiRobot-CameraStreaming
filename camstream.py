@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("--h264encoder", metavar="ENCODER", type=str, choices=["libav-omx", "omx", "libx264"], default="libav-omx", help="Which h.264 encoder to use with V4L2 (no effect with libcamera or raspicam drivers) Choices = libav-omx, omx, libx264. Default = libav-omx.")
     parser.add_argument("--width", type=int, default=640, help="Width of the video stream (must be a supported resolution). Default = 640")
     parser.add_argument("--height", type=int, default=480, help="Height of the video stream (must be a supported resolution). Default = 480")
+    parser.add_argument("--vconvert", action='store_true', help="Pass input through videoconvert element. Only applies to v4l2 pipeline.")
     parser.add_argument("--framerate", type=int, default=30, help="Video stream framerate (must be supported for the active resolution). Default = 30")
     parser.add_argument("--format", metavar="FORMAT", type=str, choices=["h264", "mjpeg"], default="h264", help="Format for the stream (h264 or mjpeg). Generally, H.264 is lower bandwidth, while MJPEG is lower latency. Default = h264")
     parser.add_argument("--bitrate", type=int, default=2048000, help="Bitrate for H.264 stream (does not apply to MJPEG, unless using raspicam driver). Default = 2048000")
@@ -124,9 +125,10 @@ if __name__ == "__main__":
                 enc = "omxh264enc target-bitrate={0} control-rate=variable ! video/x-h264,profile={1} ! h264parse config-interval=-1".format(res.bitrate, res.profile)
 
         cmd = "gst-launch-1.0 --no-fault v4l2src device={device} io-mode={iomode} ! " \
-                "video/x-raw,width={width},height={height},framerate={framerate}/1 ! " \
+                "video/x-raw,width={width},height={height},framerate={framerate}/1 ! {vconvert} ! " \
                 "{enc}".format(device=res.device, iomode=res.iomode, 
-                    width=res.width, height=res.height, framerate=res.framerate, enc=enc)
+                    width=res.width, height=res.height, framerate=res.framerate, enc=enc, 
+                    vconvert= "videoconvert" if res.vconvert else "identity")
 
     if res.netmode == "tcp":
         cmd = "{cmd} ! tcpserversink host={address} port={port}".format(cmd=cmd, address=res.address, port=res.port)
