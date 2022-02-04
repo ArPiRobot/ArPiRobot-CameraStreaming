@@ -230,6 +230,6 @@ mplayer -benchmark -nocache -fps 60 -demuxer h264es ffmpeg://tcp://remote_host:5
 
 mplayer -benchmark -nocache -fps 60 -demuxer h264es ffmpeg://udp://localhost:5008
 
-# RTSP, H264d)
+# RTSP, H264
 mplayer -benchmark -nocache -fps 60 -demuxer h264es rtsp://remote_host:8554/stream
 ```
