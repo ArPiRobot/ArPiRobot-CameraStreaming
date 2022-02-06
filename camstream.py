@@ -25,8 +25,8 @@
 #              low latency / real-time streams
 #              The system must be configured for the new camera stack (if using buster or older).
 # author:      Marcus Behel
-# date:        1-2-2022
-# version:     v1.0.0
+# date:        2-4-2022
+# version:     v1.0.1
 ####################################################################################################
 
 import argparse
