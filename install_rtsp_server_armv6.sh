@@ -32,17 +32,22 @@ if ! [ $(id -u) = 0 ]; then
    echo "This script must be run as root."
    exit 1
 fi
+if [ "$#" -ne 1 ]; then
+   echo "Exactly one parameter required: integration user."
+   exit 2
+fi
+username="$1"
 
-pushd /home/pi > /dev/null
+pushd /home/${username} > /dev/null
 
 mkdir -p rtsp-simple-server/
-chown pi:pi rtsp-simple-server/
+chown ${username}:${username} rtsp-simple-server/
 cd rtsp-simple-server/
 
 wget https://github.com/aler9/rtsp-simple-server/releases/download/v0.17.13/rtsp-simple-server_v0.17.13_linux_armv6.tar.gz
 tar -xzvf rtsp-simple-server_v0.17.13_linux_armv6.tar.gz
 rm rtsp-simple-server_v0.17.13_linux_armv6.tar.gz
-chown pi:pi ./*
+chown ${username}:${username} ./*
 
 
 popd > /dev/null
@@ -53,6 +58,7 @@ pushd "$DIR" > /dev/null
 systemctl stop rtsp-simple-server.service
 rm /lib/systemd/system/rtsp-simple-server.service
 cp rtsp-simple-server.service /lib/systemd/system/
+sed -i "s/USERNAME_HERE/${username}/g" /lib/systemd/system/rtsp-simple-server.service
 systemctl daemon-reload
 systemctl enable rtsp-simple-server.service
 systemctl start rtsp-simple-server.service

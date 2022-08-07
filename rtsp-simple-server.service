@@ -29,9 +29,9 @@ After=multi-user.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi/rtsp-simple-server
-ExecStart=/home/pi/rtsp-simple-server/rtsp-simple-server
+User=USERNAME_HERE
+WorkingDirectory=/home/USERNAME_HERE/rtsp-simple-server
+ExecStart=/home/USERNAME_HERE/rtsp-simple-server/rtsp-simple-server
 
 [Install]
 WantedBy=multi-user.target

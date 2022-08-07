@@ -29,7 +29,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-User=pi
+User=USERNAME_HERE
 ExecStart=/usr/local/bin/camstream-launch.sh
 
 [Install]
