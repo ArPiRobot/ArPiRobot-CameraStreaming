@@ -104,7 +104,7 @@ if __name__ == "__main__":
                     profile_num = "2"
                 elif res.profile == "high":
                     profile_num = "4"
-                enc = "v4l2h264enc extra-controls=“controls,h264_profile={1},video_bitrate={0} ! h264parse config-interval=-1".format(res.bitrate, profile_num)
+                enc = "v4l2h264enc extra-controls=\"controls,h264_profile={1},video_bitrate={0}\" ! h264parse config-interval=-1".format(res.bitrate, profile_num)
             
         cmd = "gst-launch-1.0 --no-fault v4l2src device={device} io-mode={iomode} ! " \
                 "video/x-raw,width={width},height={height},framerate={framerate}/1 ! {vconvert} ! " \
