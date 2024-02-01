@@ -96,7 +96,15 @@ if __name__ == "__main__":
                 enc = "x264enc tune=zerolatency speed-preset=ultrafast bitrate={0} ! video/x-h264,profile={1} ! h264parse config_interval=-1 ! video/x-h264,stream-format=byte-stream,alignment=au".format(int(res.bitrate / 1000.0), res.profile)
             elif res.h264encoder == "v4l2enc":
                 # V4L2 HW accelerated encoder (works on RPi)
-                enc = "avenc_h264_omx bitrate={0} profile={1} ! h264parse config-interval=-1".format(res.bitrate, res.profile)
+                # profile numbers from V4L2_CID_MPEG_VIDEO_H264_PROFILE
+                profile_num = "0"
+                if res.profile == "baseline":
+                    profile_num = "0"
+                elif res.profile == "main":
+                    profile_num = "2"
+                elif res.profile == "high":
+                    profile_num = "4"
+                enc = "v4l2h264enc extra-controls=“controls,h264_profile={1},video_bitrate={0} ! h264parse config-interval=-1".format(res.bitrate, profile_num)
             
         cmd = "gst-launch-1.0 --no-fault v4l2src device={device} io-mode={iomode} ! " \
                 "video/x-raw,width={width},height={height},framerate={framerate}/1 ! {vconvert} ! " \
