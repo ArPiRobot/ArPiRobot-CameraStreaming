@@ -69,26 +69,6 @@ if __name__ == "__main__":
                     bitrate=res.bitrate, profile=res.profile, quality=res.quality, 
                     rotate=res.rotate, vflip=("--vflip" if res.vflip else ""), hflip=("--hflip" if res.hflip else ""),
                     gain=res.gain)
-    elif res.driver == "raspicam":
-        # Use raspicam (old stack) to capture frames from the camera (more optimized for the pi camera than v4l2)
-        # Then use gstreamer to create a tcp server
-        # raspivid does support a tcp server, however it exists after the first client disconnects
-        # The raspicamsrc gstreamer plugin could be used, but does not appear to be easily installed on buster
-
-        # Gain is two controls with raspivid: analog and digital
-        # Maximum analog gain (experimentally) seems to be 15
-        # Use analog gain as much as possible. Use digital gain when required gain is too large for analog alone
-        analog_gain = min(res.gain, 15.0)
-        digital_gain = res.gain / analog_gain
-
-        cmd = "raspivid -t 0 --inline --width {width} --height {height} --framerate {framerate} " \
-                "--codec {format} --bitrate {bitrate} --profile {profile} " \
-                " {vflip} {hflip} --rotation {rotate} --drc off --digitalgain {dg} --analoggain {ag} -n -o - | " \
-                "gst-launch-1.0 --no-fault fdsrc fd=0".format(
-                    width=res.width, height=res.height, framerate=res.framerate, format=res.format.upper(), 
-                    bitrate=res.bitrate, profile=res.profile, 
-                    rotate=res.rotate, vflip=("--vflip" if res.vflip else ""), hflip=("--hflip" if res.hflip else ""),
-                    dg=digital_gain, ag=analog_gain)
     elif res.driver == "v4l2":
         # Gain is two controls with raspivid: analog and digital
         # Maximum analog gain (experimentally) seems to be 15
@@ -114,16 +94,10 @@ if __name__ == "__main__":
         elif res.format == "h264":
             if res.h264encoder == "libx264":
                 enc = "x264enc tune=zerolatency speed-preset=ultrafast bitrate={0} ! video/x-h264,profile={1} ! h264parse config_interval=-1 ! video/x-h264,stream-format=byte-stream,alignment=au".format(int(res.bitrate / 1000.0), res.profile)
-            elif res.h264encoder == "libav-omx":
-                # Libav using HW accelerated OMX encoder.
-                # Originally included because of issues setting bitrate with omxh264enc
-                # Now included because it may be easier to get working in raspios bullseye
+            elif res.h264encoder == "v4l2enc":
+                # V4L2 HW accelerated encoder (works on RPi)
                 enc = "avenc_h264_omx bitrate={0} profile={1} ! h264parse config-interval=-1".format(res.bitrate, res.profile)
-            elif res.h264encoder == "omx":
-                # Using omxh264enc
-                # May not be easily available in raspios bullseye
-                enc = "omxh264enc target-bitrate={0} control-rate=variable ! video/x-h264,profile={1} ! h264parse config-interval=-1".format(res.bitrate, res.profile)
-
+            
         cmd = "gst-launch-1.0 --no-fault v4l2src device={device} io-mode={iomode} ! " \
                 "video/x-raw,width={width},height={height},framerate={framerate}/1 ! {vconvert} ! " \
                 "{enc}".format(device=res.device, iomode=res.iomode, 

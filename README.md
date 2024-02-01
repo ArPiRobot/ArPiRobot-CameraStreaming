@@ -5,7 +5,7 @@ Low latency, real-time camera streaming using a Raspberry Pi.
 
 ## Requirements & Setup
 
-- Raspberry Pi OS Buster (32-bit) or Bullseye (32-bit tested, 64-bit may work)
+- Tested on raspberry Pi OS  (v4l2src and x264enc should work on any linux system)
 - Pi Camera or USB webcam
 - Install gstreamer
     - Run
@@ -14,35 +14,13 @@ Low latency, real-time camera streaming using a Raspberry Pi.
         sudo apt install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-rtsp gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl
         ```
 
-    - For buster and older, you may also want to install the gstreamer-omx plugins. These are not available for bullseye
-
-        ```sh
-        sudo apt install gstreamer1.0-omx-rpi-config gstreamer1.0-omx-rpi gstreamer1.0-omx
-        ```
-
-- Buster and older: Install libcamera (optional). Could alternatively use old raspicam stack (included by default). Bullseye and newer only support libcamera stack (and have it installed by default).
-    - Run 
-
-        ```sh
-        # Could use libcamera-apps-lite instead of libcamera-apps on RasPiOS lite
-        sudo apt install libcamera libcamera-tools libcamera-apps
-        ```
-    
-    - Then add (or uncomment) the following in `/boot/config.txt` (not just in the pi 4 section).
-
-        ```
-        dtoverlay=vc4-fkms-v3d
-        camera_auto_detect=1
-        ```
-
-
 ## Starting a Stream
 
-All streams are started using the `camstream.py` script. This script can start a stream using one of several drivers and allows for many different configuration options. Many of these options are hardware specific and will not work with all cameras. The available options all work with the Pi camera modules when using the `raspicam` or `libcamera` stacks (though not necessarily using `v4l2` with the `raspicam` stack).
+All streams are started using the `camstream.py` script. This script can start a stream using one of several drivers and allows for many different configuration options. Many of these options are hardware specific and will not work with all cameras. The available options all work with the Pi camera modules when using `libcamera` (though not necessarily using `v4l2`).
 
 The most commonly used options are used to adjust the video resolution and framerate, the format of the stream, or which camera stack is used. The camera stack is selected using the `--driver` flag, resolution is selected using the `--width` and `--height` flags, framerate is controlled using the `--framerate` flag, and the format is controlled using the `--format` flag. 
 
-The driver can be one of `libcamera`, `raspicam`, or `v4l2`. The first two are camera stacks specific to raspberry pi camera modules and do not support USB webcams. Video for Linux v2 (v4l2) supports USB webcams. The `raspicam` stack is older, but enabled by default on RasPiOS Buster and older, however the newer `libcamera` stack can be installed and used. On RasPiOS Bullseye and newer, `raspicam` is not available and `libcamera` is configured by default. On any (Linux) system, `v4l2` can be used.
+The driver can be one of `libcamera` or `v4l2`. The is a camera stacks specific to raspberry pi camera modules and do not support USB webcams. Video for Linux v2 (v4l2) supports USB webcams.
 
 When setting the resolution and framerate, make sure you choose a resolution and framerate supported by your camera. Most cameras support a finite number of resolutions and the maximum supported framerate will depend on the resolution. These settings are camera specific and usually found in the device's datasheet. You can also use `v4l2-ctl -d /dev/video0 --list-formats-ext` for USB webcams. Most cameras will likely support 640x480 at 30FPS (often at 60FPS). An HD camera should support 1280x720 at 30FPS (often 60FPS) and a 1080P camera should support 1920x1080 at 30FPS. Choosing one of these modes will often work.
 
@@ -59,17 +37,13 @@ The following are a few examples of starting and customizing streams. Additional
 
 
 # Start a MJPEG stream with a resolution of 1280x720 at 30fps using the raspicam stack (pi camera only, no usb camera)
-./camstream.py --driver raspicam --width 1280 --height 720 --framerate 30 --format mjpeg
+./camstream.py --driver libcamera --width 1280 --height 720 --framerate 30 --format mjpeg
 
 # To reduce bandwidth usage with MJPEG, use the quality flag (or with raspicam use bandwidth flag)
 # Quality from 1 to 100. Also works for v4l2 driver.
 ./camstream.py --driver libcamera --width 1280 --height 720 --framerate 30 --format mjpeg --quality 30
 
-# Raspicam driver does not support --quality flag. Use bandwidth instead
-# Bandwidth in bits / second (jpeg will be compressed enough to acheive the given bandwidth)
-./camstream.py --driver raspicam --width 1280 --height 720 --framerate 30 --format mjpeg --bitrate 2048000
-
-# Use v4l2 driver with a USB webcam. Raspicam and libcamera only support Pi camera modules
+# Use v4l2 driver with a USB webcam. libcamera only support Pi camera modules
 # Also have to specify which device v4l2 should use (--device argument)
 # If you have latency issues with a USB webcam, you can try --iomode dmabuf also (iomode only supported with v4l2)
 # List v4l2 devices with "v4l2-ctl --list-devices"
@@ -92,38 +66,38 @@ The network mode is controlled with the `--netmode` flag and the address and por
 
 ```sh
 # H.264
-./camstream.py --driver raspicam --width 640 --height 480 --framerate 30 --format h264 --netmode rtsp --address localhost --port 8554
+./camstream.py --driver libcamera --width 640 --height 480 --framerate 30 --format h264 --netmode rtsp --address localhost --port 8554
 
 # MJPEG
-./camstream.py --driver raspicam --width 640 --height 480 --framerate 30 --format mjpeg --netmode rtsp --address localhost --port 8554
+./camstream.py --driver libcamera --width 640 --height 480 --framerate 30 --format mjpeg --netmode rtsp --address localhost --port 8554
 ```
 
 With RTSP, you can also have multiple streams on the same server. Each stream has it's own path on the server, which can be set using the `--rtspkey` flag. For example, the following command results in a stream on the server at the path `rtsp://server_address:server_port/my_stream_key
 
 ```sh
-./camstream.py --driver raspicam --width 640 --height 480 --framerate 30 --format mjpeg --netmode rtsp --address localhost --port 8554 --rtspkey my_stream_key
+./camstream.py --driver libcamera --width 640 --height 480 --framerate 30 --format mjpeg --netmode rtsp --address localhost --port 8554 --rtspkey my_stream_key
 ```
 
 All Available options:
 
 | Option / flag | Default Value | Possible Values            | Description                                                               |
 | ------------- | ------------- | -------------------------- | ------------------------------------------------------------------------- |
-| --driver      | libcamera     | libcamera, raspicam, v4l2  | Which driver to use. libcamera and raspicam only support the Pi camera modules. Raspicam is the old stack and only supported on Buster and older. Libcamera is the new stack supported on Bullseye, and older OSes if installed and configured. The v4l2 driver supports any v4l2 device, such as USB webcams. If using v4l2, you must specify a device using --device. |
+| --driver      | libcamera     | libcamera, v4l2  | Which driver to use. libcamera only supports the Pi camera modules. The v4l2 driver supports any v4l2 device, such as USB webcams. If using v4l2, you must specify a device using --device. |
 | --device      | /dev/video0   | Any v4l2 device            | Which device to use if using the v4l2 driver. This option has no effect for other drivers. List devices with v4l2-ctl --list-devices |
 | --iomode      | auto          | auto, rw, mmap, userptr, dmabuf, dmabuf-import | Specify which iomode to use with a v4l2 device. Generally, use auto. If you have latency issues with a USB camera, dmabuf may help. This option has no effect for other drivers. |
-| --h264encoder | libav-omx     | libav-omx, omx, libx264    | If using the v4l2 driver and the h264 format, specifies which h264 encoder to use. omx and libav_omx are hardware accelerated (lower CPU usage and often lower latency). libx264 is software only (more compatible). If using Bullseye, omx will not work, unless you build the plugins yourself. libav_omx will work on Buster and Bullseye. |
+| --h264encoder | v4l2          | v4l2, libx264    | If using the v4l2 driver and the h264 format, specifies which h264 encoder to use. v4l2 is hardware accelerated (lower CPU usage and often lower latency). libx264 is software only (more compatible). |
 | --width       | 640           | integers                   | Width of the video stream resolution. Must be supported by the camera. |
 | --height      | 480           | integers                   | Height of the video stream resolution. Must be supported by the camera. | 
 | --framerate   | 30            | integers                   | Framerate of the video stream. Must be supported by the camera for the given resolution. |
 | --vconvert    | not present   | flag present = true, else false | If this flag is present, input will be passed through videoconvert before passing to the encoder. Only applies to v4l2 pipeline. |
 | --format      | h264          | h264, mjpeg                | Which format to stream in. H.264 is often better (lower bandwidth), but can cause some latency. MJPEG is easier to encode and decode, but requires higher bandwidth for the same resolution, famerate, and quality. |
-| --bitrate     | 2048000       | integers                   | For h264 streams, this is a desired bitrate of the video stream in bits / sec (ex 2048000 = 2Mbits / sec). For mjpeg, this generally has no effect. However, when using the raspicam driver, this option has the same effect for mjpeg as it does for h264. In this case, the desired bitrate indirectly controls the jpeg compression quality. |
+| --bitrate     | 2048000       | integers                   | For h264 streams, this is a desired bitrate of the video stream in bits / sec (ex 2048000 = 2Mbits / sec). For mjpeg, this has no effect. |
 | --profile     | baseline      | baseline, main, high       | Which h264 profile to use. |
-| --quality     | 50            | integers 1-100 (inclusive) | Quality of jpeg compression when using a mjpeg stream. This option has no effect if using an h264 format. This also does not work with the raspicam driver. |
+| --quality     | 50            | integers 1-100 (inclusive) | Quality of jpeg compression when using a mjpeg stream. This option has no effect if using an h264 format. |
 | --vflip       | not present   | flag present = true, else false | If this flag is present, the video will be flipped vertically. | 
 | --hflip       | not present   | flag present = true, else false | If this flag is present, the video will be flipped horizontally. |
 | --rotate      | 0             | 0, 90, 180, 270 (0, 180 for libcamera) | Used to rotate the video. Often, only 0 and 180 degrees will be supported. |
-| --gain        | 10.0          | numbers                    | Use with the libcamera and raspicam stacks to control the camera's "sensativity" to light. In effect, higher gain means the camera will do better in lower light (though there is a limit to this). Often exceeding a gain of 15 or 20 is not going to cause any major change. |
+| --gain        | 10.0          | numbers                    | Use with libcamera to control the camera's "sensativity" to light. In effect, higher gain means the camera will do better in lower light (though there is a limit to this). Often exceeding a gain of 15 or 20 is not going to cause any major change. |
 | --netmode     | tcp           | tcp, udp, rtsp             | Which networking mode to use. TCP runs a server that clients connect to. TCP ensures packet delivery and order, but with poor quality connections this can cause latency as older frames must be sent before newer ones. When using UDP, packet delivery and order is not gaurenteed, meaning with poor quality connections frames may be lost causing some corruption of video (mostly with h264), but allows higher bandwidths and ensures the newest frame is always displayed by the client. UDP is also not a server model. The Pi must know the IP address of the device playing the stream. RTSP relies on a server running on the Pi, but is capable of using UDP transports with a client server model. |
 | --address     | 0.0.0.0       | strings                    | Which IP address to either run the TCP server on (0.0.0.0 means all IP addresses of the device) or which IP address to send UDP datagrams to. |
 | --port        | 5008          | integers                   | Which port to run the TCP server on for the camera streams. If UDP mode, this is the port to send UDP datagrams to at the given address. If streaming multiple cameras, each will need its own port. |
