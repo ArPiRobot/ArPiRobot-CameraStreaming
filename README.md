@@ -80,29 +80,6 @@ With RTSP, you can also have multiple streams on the same server. Each stream ha
 
 All Available options:
 
-| Option / flag | Default Value | Possible Values            | Description                                                               |
-| ------------- | ------------- | -------------------------- | ------------------------------------------------------------------------- |
-| --driver      | libcamera     | libcamera, v4l2  | Which driver to use. libcamera only supports the Pi camera modules. The v4l2 driver supports any v4l2 device, such as USB webcams. If using v4l2, you must specify a device using --device. |
-| --device      | /dev/video0   | Any v4l2 device            | Which device to use if using the v4l2 driver. This option has no effect for other drivers. List devices with v4l2-ctl --list-devices |
-| --iomode      | auto          | auto, rw, mmap, userptr, dmabuf, dmabuf-import | Specify which iomode to use with a v4l2 device. Generally, use auto. If you have latency issues with a USB camera, dmabuf may help. This option has no effect for other drivers. |
-| --h264encoder | v4l2          | v4l2, libx264    | If using the v4l2 driver and the h264 format, specifies which h264 encoder to use. v4l2 is hardware accelerated (lower CPU usage and often lower latency). libx264 is software only (more compatible). |
-| --width       | 640           | integers                   | Width of the video stream resolution. Must be supported by the camera. |
-| --height      | 480           | integers                   | Height of the video stream resolution. Must be supported by the camera. | 
-| --framerate   | 30            | integers                   | Framerate of the video stream. Must be supported by the camera for the given resolution. |
-| --vconvert    | not present   | flag present = true, else false | If this flag is present, input will be passed through videoconvert before passing to the encoder. Only applies to v4l2 pipeline. |
-| --format      | h264          | h264, mjpeg                | Which format to stream in. H.264 is often better (lower bandwidth), but can cause some latency. MJPEG is easier to encode and decode, but requires higher bandwidth for the same resolution, famerate, and quality. |
-| --bitrate     | 2048000       | integers                   | For h264 streams, this is a desired bitrate of the video stream in bits / sec (ex 2048000 = 2Mbits / sec). For mjpeg, this has no effect. |
-| --profile     | baseline      | baseline, main, high       | Which h264 profile to use. |
-| --quality     | 50            | integers 1-100 (inclusive) | Quality of jpeg compression when using a mjpeg stream. This option has no effect if using an h264 format. |
-| --vflip       | not present   | flag present = true, else false | If this flag is present, the video will be flipped vertically. | 
-| --hflip       | not present   | flag present = true, else false | If this flag is present, the video will be flipped horizontally. |
-| --rotate      | 0             | 0, 90, 180, 270 (0, 180 for libcamera) | Used to rotate the video. Often, only 0 and 180 degrees will be supported. |
-| --gain        | 10.0          | numbers                    | Use with libcamera to control the camera's "sensativity" to light. In effect, higher gain means the camera will do better in lower light (though there is a limit to this). Often exceeding a gain of 15 or 20 is not going to cause any major change. |
-| --netmode     | tcp           | tcp, udp, rtsp             | Which networking mode to use. TCP runs a server that clients connect to. TCP ensures packet delivery and order, but with poor quality connections this can cause latency as older frames must be sent before newer ones. When using UDP, packet delivery and order is not gaurenteed, meaning with poor quality connections frames may be lost causing some corruption of video (mostly with h264), but allows higher bandwidths and ensures the newest frame is always displayed by the client. UDP is also not a server model. The Pi must know the IP address of the device playing the stream. RTSP relies on a server running on the Pi, but is capable of using UDP transports with a client server model. |
-| --address     | 0.0.0.0       | strings                    | Which IP address to either run the TCP server on (0.0.0.0 means all IP addresses of the device) or which IP address to send UDP datagrams to. |
-| --port        | 5008          | integers                   | Which port to run the TCP server on for the camera streams. If UDP mode, this is the port to send UDP datagrams to at the given address. If streaming multiple cameras, each will need its own port. |
-| --rtspkey     | stream        | strings                    | Path for this stream on the rtsp server. |
-
 
 ## Starting a Stream at Boot
 
