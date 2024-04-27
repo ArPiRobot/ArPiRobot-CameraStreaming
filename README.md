@@ -1,3 +1,10 @@
+# Archived
+
+Camera stream launching will be handled within robot programs using corelib code in future versions. This allows easier access to camera frames using OpenCV for advanced use cases.
+
+
+
+
 # ArPiRobot-CameraStreaming
 
 Low latency, real-time camera streaming using a Raspberry Pi.
